@@ -173,7 +173,7 @@ def check_target(connection, report):
     expected = [MODELS[report['product']][0].upper(), report['build'], report['generation']]
     actual = connection.run('/usr/sbin/sysctl -n hw.model; /usr/sbin/sysctl -n kern.osversion; '
                             '/bin/cat /var/lib/olsn0w/generation').decode().splitlines()
-    if actual != expected or connection.run(ROOT_CHECK).strip() != b'0':
+    if len(actual) < 3 or actual[0].lower() != expected[0].lower() or actual[1:] != expected[1:] or connection.run(ROOT_CHECK).strip() != b'0':
         raise ValueError('SSH target is not the selected installed olsn0w system')
     job = plistlib.loads(connection.read(JOB))
     if (job.get('Label') != 'org.olsn0w.sshd' or job.get('ProgramArguments') !=

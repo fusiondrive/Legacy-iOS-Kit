@@ -139,6 +139,10 @@ def profile_path(product, build):
 
 def technique(release, product, build=None):
     selected = version(release)
+    if selected[0] == 5:
+        if build == '9B206' and product in ('iPhone2,1', 'iPhone4,1'):
+            return 'lockdownd-patch'
+        return None
     if (4,) <= selected < (7,):
         return 'lockdownd-patch'
     if build and (8,) <= selected <= (10, 3, 4) and profile_path(product, build):

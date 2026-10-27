@@ -3,7 +3,7 @@
 set -eu
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 . /usr/local/libexec/olsn0w/target.conf
-[ "$(sysctl -n hw.model)" = "$AG_BOARD" ]
+[ "$(echo "$(sysctl -n hw.model)" | tr '[:upper:]' '[:lower:]')" = "$(echo "$AG_BOARD" | tr '[:upper:]' '[:lower:]')" ]
 [ "$(sysctl -n kern.osversion)" = "$AG_BUILD" ]
 case "$(mount)" in *"$AG_ROOT_DEVICE on / ("*) ;; *) exit 80;; esac
 case "$(mount)" in *"$AG_DATA_DEVICE on /private/var ("*) ;; *) exit 81;; esac

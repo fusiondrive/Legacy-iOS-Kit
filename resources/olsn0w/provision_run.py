@@ -30,13 +30,15 @@ def restore_arguments(identity, ipsw, ticket, baseband=None, baseband_manifest=N
         executable=KIT/'bin/macos/x86_64/futurerestore_old'
     if not executable.is_file():raise ValueError('Kit legacy restore tool is missing')
     argv=[str(executable), '--use-pwndfu', '-t', str(Path(ticket).resolve())]
-    strategy=baseband_strategy(identity['product'])
-    if strategy!='update':
+    if not profile(identity['product'])['has_baseband']:
         if baseband or baseband_manifest:
             raise ValueError('Selected modem policy does not accept a baseband update')
         argv+=['--no-baseband']
+    elif not baseband or not baseband_manifest:
+        if baseband_strategy(identity['product'])!='preserve':
+            raise ValueError('Selected cellular firmware and manifest required')
+        argv+=['--no-baseband']
     else:
-        if not baseband or not baseband_manifest:raise ValueError('Selected cellular firmware and manifest required')
         baseband,baseband_manifest=Path(baseband).resolve(),Path(baseband_manifest).resolve()
         manifest=plistlib.loads(baseband_manifest.read_bytes())
         board,chip,board_id=MODELS[identity['product']]
@@ -135,7 +137,7 @@ def run(session, bundle, ticket, keys, *, baseband=None, baseband_manifest=None,
     argv=restore_arguments(record['identity'],bundle/'base8.ipsw',ticket,baseband,baseband_manifest)
     try:
         prepare_dfu(session,pwned=pwned,progress=progress)
-    except (RuntimeError, subprocess.TimeoutExpired) as error:
+    except (RuntimeError, subprocess.TimeoutExpired, ValueError, OSError) as error:
         # prepare_dfu only talks to the USB boot ROM/iBoot. At this point the
         # restore tool has not started, its work directory does not exist and
         # persistent storage has not been touched, so retrying is safe.

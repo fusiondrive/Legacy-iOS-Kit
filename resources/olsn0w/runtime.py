@@ -20,6 +20,8 @@ def check():
     import_module('capstone').cs_version()
     import_module('unicorn').uc_version()
     import_module('usb.core')
+    from common import load_usb_backend
+    load_usb_backend()
     aes = import_module('Crypto.Cipher.AES')
     aes.new(bytes(16), aes.MODE_ECB).encrypt(bytes(16))
 

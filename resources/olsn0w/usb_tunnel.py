@@ -6,11 +6,12 @@ import socket
 import subprocess
 import time
 
-from common import save
+from common import load_usb_backend, save
 from guided_inputs import tool
 
 
 def normal_serial():
+    load_usb_backend()
     import usb.core
     import usb.util
     devices=[d for d in usb.core.find(find_all=True,idVendor=0x05ac) if 0x1200<=d.idProduct<=0x12ff]

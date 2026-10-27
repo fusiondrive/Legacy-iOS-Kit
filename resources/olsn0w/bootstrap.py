@@ -111,7 +111,11 @@ def prepare(product, firmware, loose_libraries, native, relay_file, kernel_file,
     paths = STOCK_FILES+['System/Library/LaunchDaemons/com.apple.jetsamproperties.'+board[:-2].upper()+'.plist']
     for name in paths:
         parent, leaf = name.rsplit('/',1)
-        record = next(r for r in stock.ls('/'+parent) if r['name'] == leaf)
+        record = next((r for r in stock.ls('/'+parent) if r['name'].lower() == leaf.lower()), None)
+        if record is None:
+            raise ValueError('Expected a stock regular file: '+name)
+        leaf = record['name']
+        name = parent + '/' + leaf
         if not stat.S_ISREG(record['mode']):
             raise ValueError('Expected a stock regular file: '+name)
         data = stock.read('/'+name)

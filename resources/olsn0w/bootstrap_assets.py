@@ -31,7 +31,8 @@ def prepare(product, serial, destination):
         serial_count=1 if name=='root_start' else 0
         if data.count(board)!=board_count or data.count(serial_token)!=serial_count:
             raise ValueError('Ambiguous template constants: '+name)
-        data=data.replace(board,MODELS[product][0].upper().encode().ljust(len(board),b'\0'))
+        from common import canonical_model
+        data=data.replace(board,canonical_model(product).encode().ljust(len(board),b'\0'))
         data=data.replace(serial_token,serial.lower().encode()+b'\0')
         output=destination/name;output.write_bytes(data)
         resign(output,ENTITLEMENTS)

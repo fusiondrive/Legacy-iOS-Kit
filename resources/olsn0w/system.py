@@ -496,7 +496,9 @@ def configure_untether_jetsam(image, product, label):
         raise ValueError('Expected an iOS 7 jetsam board identity')
     system = '/System/Library/LaunchDaemons'
     board = MODELS[product][0]
-    path = system+'/com.apple.jetsamproperties.'+board[:-2].upper()+'.plist'
+    leaf = 'com.apple.jetsamproperties.'+board[:-2].upper()+'.plist'
+    match = next((r['name'] for r in image.ls(system) if r['name'].lower() == leaf.lower()), leaf)
+    path = system+'/'+match
     configured = untether_jetsam_properties(image.read(path), label)
     image.add(path, configured)
     if image.read(path) != configured:
@@ -739,7 +741,8 @@ Subsystem sftp /usr/libexec/sftp-server
         raise ValueError('Invalid target boot-success job')
     payload['Library/LaunchDaemons/org.olsn0w.boot-success.plist'] = entry(
         'Library/LaunchDaemons/org.olsn0w.boot-success.plist', boot_success_job)
-    config = dict(AG_BOARD=MODELS[source['product']][0].upper(), AG_BUILD=source['build'],
+    from common import canonical_model
+    config = dict(AG_BOARD=canonical_model(source['product']), AG_BUILD=source['build'],
                   AG_ROOT_DEVICE=root_device, AG_DATA_DEVICE=data_device, AG_GENERATION=generation)
     # The physically qualified iOS 8 first boot keeps the native daemon at a
     # private path and leaves a tiny wrapper at Apple's executable path.  The

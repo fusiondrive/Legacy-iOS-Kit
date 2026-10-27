@@ -1,6 +1,7 @@
 """Connected-device selection, automatic preparation and a single guided DFU."""
 import hashlib
 import json
+import os
 from pathlib import Path
 import plistlib
 import re
@@ -183,9 +184,10 @@ def _prepare(session, release, display):
         cache_firmware=bootstrap_cache_firmware(product,base_firmware,extract,show)
     display.phase(2,'preparing the selected system and boot relay.')
     with activity('preparing the selected system and boot relay'):
-        relay=firmware.parent/'relay'
+        verbose = bool(os.environ.get('OLSN0W_VERBOSE') in ('1', 'true', 'True'))
+        relay=firmware.parent/('relay-verbose' if verbose else 'relay')
         if not reusable_recipe(relay,RELAY_RECIPE,checked_manifest):
-            relay_prepare(firmware)
+            relay_prepare(firmware, verbose=verbose)
         relay_report=checked_manifest(relay)
         system=firmware.parent/('system-hacktiv8-v1' if remove_setup_app else 'system')
         system_inputs=dict(relay_recipe_version=relay_report['recipe_version'],

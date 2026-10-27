@@ -38,7 +38,8 @@ def ticket(identity, destination):
 def modem(identity, destination):
     selected_profile=profile(identity['product'])
     if not selected_profile['has_baseband']:return None,None
-    if baseband_strategy(identity['product'])=='preserve':return None,None
+    if 'baseband' not in selected_profile and baseband_strategy(identity['product'])=='preserve':
+        return None,None
     destination=Path(destination);destination.mkdir(mode=0o700)
     product=identity['product'];board,chip,board_id=MODELS[product]
     specification=selected_profile.get('baseband',dict(

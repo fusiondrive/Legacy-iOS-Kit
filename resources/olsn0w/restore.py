@@ -190,8 +190,9 @@ class Rescue:
     def tool(self,name):return self.maintenance+'/'+name
     def guard(self, mounted=()):
         state=self.run(self.tool('sysctl')+' hw.model kern.osversion').decode()
-        if ('hw.model: '+self.identity['board'].upper()+'\n' not in state or
-                'kern.osversion: '+self.rescue_build+'\n' not in state):
+        fields = dict(re.findall(r'([a-zA-Z0-9_.]+):\s*(\S+)', state))
+        if (fields.get('hw.model', '').lower() != self.identity['board'].lower() or
+                fields.get('kern.osversion') != self.rescue_build):
             raise ValueError('Wrong RAM system identity')
         mounts=self.run('/sbin/mount').decode().splitlines()
         if not any(x.startswith('/dev/md0 on / ') for x in mounts):raise ValueError('Root is not RAM')

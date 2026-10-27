@@ -65,9 +65,15 @@ MODEL_PROFILES = {
     'iPad3,1': dict(soc='a5x', cache_arch='armv7', has_baseband=False,
                     external_pwndfu=True),
     'iPad3,2': dict(soc='a5x', cache_arch='armv7', has_baseband=True,
-                    baseband_strategy='preserve', external_pwndfu=True),
+                    baseband_strategy='preserve', external_pwndfu=True,
+                    baseband=dict(version='9.3.6', build='13G37',
+                                  name='Mav4-6.7.00.Release.bbfw',
+                                  sha1='a5d6978ecead8d9c056250ad4622db4d6c71d15e')),
     'iPad3,3': dict(soc='a5x', cache_arch='armv7', has_baseband=True,
-                    baseband_strategy='preserve', external_pwndfu=True),
+                    baseband_strategy='preserve', external_pwndfu=True,
+                    baseband=dict(version='9.3.6', build='13G37',
+                                  name='Mav4-6.7.00.Release.bbfw',
+                                  sha1='a5d6978ecead8d9c056250ad4622db4d6c71d15e')),
     'iPhone4,1': dict(soc='a5', cache_arch='armv7', has_baseband=True,
                      baseband_family='Trek',
                      external_pwndfu=True, multipatch=True,
@@ -213,9 +219,70 @@ def run(argv, log=None, patcher=False, timeout=180):
     return result.stdout
 
 
+def canonical_model(product):
+    if product in MODELS:
+        board = MODELS[product][0]
+    else:
+        board = product
+    if board.lower() == 'j2aap':
+        return 'J2aAP'
+    if board.lower() == 'k93aap':
+        return 'K93aAP'
+    return board.upper()
+
+
 def save(path, value):
     Path(path).write_text(json.dumps(value, indent=2) + '\n')
 
 
 def integer(value):
     return int(value, 0) if isinstance(value, str) else int(value)
+
+
+def load_usb_backend():
+    """Ensure PyUSB finds a compatible libusb-1.0 library across platforms (including macOS Apple Silicon)."""
+    try:
+        import usb.backend.libusb1 as libusb1
+    except ImportError:
+        return None
+    if getattr(libusb1, '_lib_object', None) is not None:
+        return libusb1._lib_object
+
+    import ctypes
+    import ctypes.util
+
+    def _find_libusb(candidate=None):
+        candidates = []
+        if platform.system() == 'Darwin':
+            if platform.machine() == 'arm64':
+                candidates.extend([
+                    '/opt/homebrew/lib/libusb-1.0.dylib',
+                    '/opt/homebrew/lib/libusb.dylib',
+                ])
+            candidates.extend([
+                '/opt/local/lib/libusb-1.0.dylib',
+                '/usr/local/lib/libusb-1.0.dylib',
+                '/opt/local/lib/libusb.dylib',
+                '/usr/local/lib/libusb.dylib',
+            ])
+        if candidate:
+            found = ctypes.util.find_library(candidate)
+            if found:
+                candidates.append(found)
+        for name in ('usb-1.0', 'libusb-1.0', 'usb'):
+            found = ctypes.util.find_library(name)
+            if found and found not in candidates:
+                candidates.append(found)
+        for path in candidates:
+            try:
+                lib = ctypes.CDLL(path)
+                if hasattr(lib, 'libusb_init'):
+                    return path
+            except Exception:
+                continue
+        return None
+
+    try:
+        return libusb1.get_backend(find_library=_find_libusb)
+    except Exception:
+        return None

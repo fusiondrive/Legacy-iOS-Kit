@@ -6,7 +6,7 @@ import re
 import subprocess
 import time
 
-from common import KIT, digest, profile, tools
+from common import KIT, digest, load_usb_backend, profile, tools
 from device import recheck_recovery
 from restore import Rescue, checkpoint
 
@@ -18,6 +18,7 @@ def has_checkm8_marker(output):
 
 def unique_usb_target(ecid):
     # libusb works on Linux and macOS; no system_profiler/ioreg dependency.
+    load_usb_backend()
     import usb.core
     import usb.util
     # The unaddressed exploit tools operate on DFU/recovery interfaces, not
